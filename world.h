@@ -30,4 +30,6 @@ void moveWorkerInDirection(World *world, int workerId, enum Direction direction)
 
 bool beenInTheHouseBefore(int id, House *house);
 
+void printFinalResults(World *world);
+
 #endif //FIRST_CODE_WORLD_H

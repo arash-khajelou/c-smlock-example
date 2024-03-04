@@ -20,7 +20,7 @@ void initWorld(World *world, int n, int damagedHouses) {
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            initHouse(&world->houses[i][j]);
+            initHouse(&world->houses[i][j], i, j);
         }
     }
 
@@ -86,7 +86,7 @@ void workerLogic(World *world, int workerId, int *semIds) {
         addNoteToHouse(currentHouse, newNote);
         unlockHouse(semIds[semIndex]); // Unlock the house semaphore after repairing
 
-        sleep(1);
+        usleep(600000);
     }
 
     printf("Worker %d finished repairing %d houses.\n", workerId, worker->repairedHouses);
@@ -110,7 +110,7 @@ bool moveWorker(World *world, int workerId) {
 
             worker->prevXMove = getStartingZoneXDirection(workerZone, *point);
             worker->prevYMove = getStartingZoneYDirection(workerZone, *point);
-        }else {
+        } else {
             enum Direction nextMove = decideNextMoveToGetInTheNearestCorner(workerZone, *point);
             if (nextMove != NONE) {
                 moveWorkerInDirection(world, workerId, nextMove);
@@ -125,19 +125,19 @@ bool moveWorker(World *world, int workerId) {
         }
     }
 
-    if(worker->zoneTraverseStarted) {
+    if (worker->zoneTraverseStarted) {
         enum Direction nextMove = decideNextMoveToTraverseTheZone(
                 workerZone, *point, worker->prevXMove, worker->prevYMove
         );
 
-        if(nextMove == LEFT || nextMove == RIGHT) {
+        if (nextMove == LEFT || nextMove == RIGHT) {
             worker->prevXMove = nextMove;
-        }else {
+        } else {
             worker->prevYMove = nextMove;
 
-            if(worker->prevXMove == LEFT) {
+            if (worker->prevXMove == LEFT) {
                 worker->prevXMove = RIGHT;
-            }else{
+            } else {
                 worker->prevXMove = LEFT;
             }
         }
@@ -169,7 +169,7 @@ Zone getWorkerZone(World *world, int workerId) {
     int n = world->n;
     int halfN = n / 2;
     int isNOdd = n % 2; // Check if N is odd
-    int max = n-1;
+    int max = n - 1;
     int min = 0;
 
     int midPoint = isNOdd ? halfN : halfN - 1;
@@ -190,7 +190,7 @@ Zone getWorkerZone(World *world, int workerId) {
 
     if (workerId == 2) {
         return (Zone) {
-                .topLeft = {0, midPoint+1},
+                .topLeft = {0, midPoint + 1},
                 .bottomRight = {midPoint, max}
         };
     }
@@ -211,4 +211,21 @@ bool beenInTheHouseBefore(int workerId, House *house) {
         }
     }
     return false;
+}
+
+void printFinalResults(World *world) {
+
+    printf("\n\n\n*************************\n            Houses\n*************************\n\n");
+    for (int i = 0; i < world->n; i++) {
+        for (int j = 0; j < world->n; j++) {
+            House *house = &world->houses[i][j];
+            printHouse(house);
+        }
+    }
+
+    printf("*************************\n            Workers\n*************************\n\n");
+    for (int i = 0; i < 4; i++) {
+        Worker *worker = &world->workers[i];
+        printWorker(worker);
+    }
 }

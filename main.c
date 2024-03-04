@@ -36,32 +36,16 @@ int main() {
         startRepairProcess(world, i, semIds);
     }
 
+    initializeMonitor();
+    monitorMainLoop(world);
+
     for (int i = 0; i < 5; i++) {
         wait(NULL); // Wait for all worker processes to finish
     }
 
-    initializeMonitor();
-
-    while(true) {
-        printWorldStatus(world);
-
-        int finishedCount = 0;
-        for(int i=0; i<4; i++) {
-            Worker * worker = &world->workers[i];
-            if(worker->workerStatus == FINISHED) {
-                finishedCount ++;
-            }
-        }
-
-        if(finishedCount == 4) {
-            break;
-        }
-
-        sleep(1);
-    }
-
+    cleanupMonitor();
+    printFinalResults(world);
     shmctl(shmid, IPC_RMID, NULL); // Cleanup shared memory
     cleanupSemaphores(semIds, n);
-    cleanupMonitor();
     return 0;
 }

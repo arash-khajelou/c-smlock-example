@@ -26,3 +26,7 @@ void finishWorkerProcess(Worker *worker) {
     worker->workerStatus = FINISHED;
     printf("Worker %d finished the zone traverse\n", worker->workerId);
 }
+
+void printWorker(Worker *worker) {
+    printf("Worker %d finished repairing %d houses.\n", worker->workerId, worker->repairedHouses);
+}

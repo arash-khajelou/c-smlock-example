@@ -19,7 +19,8 @@ typedef struct {
 
 void addNoteToHouse(House *house, const char *note);
 
-void initHouse(House *house);
+void initHouse(House *house, int x, int y);
 
+void printHouse(House *house);
 
 #endif //FIRST_CODE_HOUSE_H

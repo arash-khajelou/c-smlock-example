@@ -10,5 +10,6 @@
 void initializeMonitor();
 void printWorldStatus(World *world);
 void cleanupMonitor();
+void monitorMainLoop(World *world);
 
 #endif //FIRST_CODE_MONITOR_H

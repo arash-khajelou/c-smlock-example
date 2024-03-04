@@ -3,6 +3,8 @@
 //
 
 #include <ncurses.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include "monitor.h"
 
@@ -15,38 +17,59 @@ void initializeMonitor() {
 }
 
 void printWorldStatus(World *world) {
-    clear(); // Clear the screen of its current contents
+    clear(); // Clear the screen before redrawing
 
-    // Initialize some color pairs
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     init_pair(3, COLOR_YELLOW, COLOR_BLACK);
     init_pair(4, COLOR_BLUE, COLOR_BLACK);
 
-    // Iterate through the world grid
+    // Draw the grid based on the current world state
     for (int i = 0; i < world->n; i++) {
         for (int j = 0; j < world->n; j++) {
-            // Choose color based on house state
             if (world->houses[i][j].isDamaged) {
-                attron(COLOR_PAIR(1));
+                attron(COLOR_PAIR(1)); // Red for damaged
             } else {
-                attron(COLOR_PAIR(2));
+                attron(COLOR_PAIR(2)); // Green for undamaged
             }
-            mvprintw(i, j * 2, "H"); // Print "H" for House
+            mvprintw(j, i * 2, "H");
             attroff(COLOR_PAIR(1) | COLOR_PAIR(2));
         }
     }
 
-    // Print workers
+    // Draw workers
     for (int i = 0; i < MAX_WORKER_COUNT; i++) {
-        attron(COLOR_PAIR(3));
+        attron(COLOR_PAIR(3)); // Yellow for workers
         mvprintw(world->workers[i].position.y, world->workers[i].position.x * 2, "W");
         attroff(COLOR_PAIR(3));
     }
 
-    refresh(); // Print it on to the real screen
+    refresh();
 }
 
 void cleanupMonitor() {
     endwin(); // End curses mode
+}
+
+void monitorMainLoop(World *world) {
+    if (fork() == 0) { // Child process
+        while (true) {
+            printWorldStatus(world);
+
+            int finishedCount = 0;
+            for (int i = 0; i < 4; i++) {
+                Worker *worker = &world->workers[i];
+                if (worker->workerStatus == FINISHED) {
+                    finishedCount++;
+                }
+            }
+
+            if (finishedCount == 4) {
+                break;
+            }
+
+            usleep(300000); // Sleep for 300 ms
+        }
+        exit(0); // Terminate child process
+    }
 }

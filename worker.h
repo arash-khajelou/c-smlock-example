@@ -27,4 +27,6 @@ void workerFacedError(Worker *worker, char *error);
 
 void finishWorkerProcess(Worker *worker);
 
+void printWorker(Worker *worker);
+
 #endif //FIRST_CODE_WORKER_H
