@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/ipc.h>
 #include <time.h>
 #include <stdbool.h>
 #include <string.h>
@@ -38,7 +37,7 @@ void initWorld(World *world, int n, int damagedHouses) {
 
     // Randomly position workers
     for (int i = 0; i < 4; i++) {
-        initWorker(&world->workers[i], rand() % n, rand() % n);
+        initWorker(&world->workers[i], rand() % n, rand() % n, i);
     }
 }
 
@@ -46,8 +45,8 @@ void workerLogic(World *world, int workerId, int *semIds) {
     Worker *worker = &world->workers[workerId];
     Point *position = &worker->position;
 
-    char* message = malloc(100 * sizeof(char));
-    sprintf(message, "Worker %d started repairing.", workerId);
+    char *message = malloc(100 * sizeof(char));
+    sprintf(message, "Worker %d: Started repairing.\n", workerId);
     logInfo(message);
 
 
@@ -57,7 +56,7 @@ void workerLogic(World *world, int workerId, int *semIds) {
             break;
         }
 
-        if(!moveWorker(world, workerId)) {
+        if (!moveWorker(world, workerId)) {
             break;
         }
 
@@ -83,10 +82,11 @@ void workerLogic(World *world, int workerId, int *semIds) {
         }
 
         char *newNote = malloc(MAX_NOTE_LENGTH * sizeof(char));
-        sprintf(newNote, "%d repaired %d times.", workerId, worker->repairedHouses);
+        sprintf(newNote, "%d repaired %d times.\n", workerId, worker->repairedHouses);
         addNoteToHouse(currentHouse, newNote);
         unlockHouse(semIds[semIndex]); // Unlock the house semaphore after repairing
 
+        sleep(1);
     }
 
     printf("Worker %d finished repairing %d houses.\n", workerId, worker->repairedHouses);
@@ -107,51 +107,55 @@ bool moveWorker(World *world, int workerId) {
     if (!worker->zoneTraverseStarted) {
         if (isPointOnTheCorner(workerZone, *point)) {
             worker->zoneTraverseStarted = true;
-        }
 
-        worker->prevXMove = getStartingZoneXDirection(workerZone, *point);
-        worker->prevYMove = getStartingZoneYDirection(workerZone, *point);
-    }
-
-    if (isPointInTheZone(workerZone, *point)) {
-        if (!worker->zoneTraverseStarted) {
+            worker->prevXMove = getStartingZoneXDirection(workerZone, *point);
+            worker->prevYMove = getStartingZoneYDirection(workerZone, *point);
+        }else {
             enum Direction nextMove = decideNextMoveToGetInTheNearestCorner(workerZone, *point);
             if (nextMove != NONE) {
                 moveWorkerInDirection(world, workerId, nextMove);
             } else {
                 char *message = malloc(100 * sizeof(char));;
                 sprintf(message,
-                        "Error: Worker %d is already on the corner. But the zoneTraverseStarted is false. (x: %d, y: %d)",
+                        "Worker %d: Already on the corner. But the zoneTraverseStarted is false. (x: %d, y: %d)\n",
                         workerId, point->x, point->y);
                 workerFacedError(worker, message);
                 return false;
             }
-        } else {
-            enum Direction nextMove = decideNextMoveToTraverseTheZone(
-                    workerZone, *point, worker->prevXMove, worker->prevYMove
-            );
-            if (nextMove != NONE) {
-                moveWorkerInDirection(world, workerId, nextMove);
-            } else {
-                finishWorkerProcess(worker);
+        }
+    }
+
+    if(worker->zoneTraverseStarted) {
+        enum Direction nextMove = decideNextMoveToTraverseTheZone(
+                workerZone, *point, worker->prevXMove, worker->prevYMove
+        );
+
+        if(nextMove == LEFT || nextMove == RIGHT) {
+            worker->prevXMove = nextMove;
+        }else {
+            worker->prevYMove = nextMove;
+
+            if(worker->prevXMove == LEFT) {
+                worker->prevXMove = RIGHT;
+            }else{
+                worker->prevXMove = LEFT;
             }
         }
-    } else if (!worker->zoneTraverseStarted) {
-        enum Direction nextMove = decideNextMoveToGetInTheNearestCorner(workerZone, *point);
+
         if (nextMove != NONE) {
             moveWorkerInDirection(world, workerId, nextMove);
         } else {
-            workerFacedError(worker, "Error: Worker is not in the zone and cannot move to the nearest corner.");
+            finishWorkerProcess(worker);
             return false;
         }
     }
+
     return true;
 }
 
 void moveWorkerInDirection(World *world, int workerId, enum Direction direction) {
     Worker *worker = &world->workers[workerId];
     Point *point = &worker->position;
-
     movePoint(point, direction);
 
     if (direction == RIGHT || direction == LEFT) {
@@ -165,33 +169,35 @@ Zone getWorkerZone(World *world, int workerId) {
     int n = world->n;
     int halfN = n / 2;
     int isNOdd = n % 2; // Check if N is odd
+    int max = n-1;
+    int min = 0;
 
-    int midPoint = isNOdd ? halfN + 1 : halfN; // If N is odd, bottom zones get the extra row
+    int midPoint = isNOdd ? halfN : halfN - 1;
 
     if (workerId == 0) {
         return (Zone) {
-                .topLeft = {0, 0},
+                .topLeft = {min, min},
                 .bottomRight = {midPoint, midPoint}
         };
     }
 
     if (workerId == 1) {
         return (Zone) {
-                .topLeft = {0, midPoint + 1},
-                .bottomRight = {midPoint + 1, n}
+                .topLeft = {midPoint + 1, 0},
+                .bottomRight = {max, midPoint}
         };
     }
 
     if (workerId == 2) {
         return (Zone) {
-                .topLeft = {midPoint + 1, 0},
-                .bottomRight = {n, midPoint}
+                .topLeft = {0, midPoint+1},
+                .bottomRight = {midPoint, max}
         };
     }
 
     return (Zone) {
             .topLeft = {midPoint + 1, midPoint + 1},
-            .bottomRight = {n, n}
+            .bottomRight = {max, max}
     };
 }
 

@@ -4,9 +4,11 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "world.h"
 #include "semaphore.h"
+#include "monitor.h"
 
 int main() {
     int n, damagedHouses;
@@ -38,9 +40,28 @@ int main() {
         wait(NULL); // Wait for all worker processes to finish
     }
 
-    // TODO: implement the monitor thread to show the world state
+    initializeMonitor();
+
+    while(true) {
+        printWorldStatus(world);
+
+        int finishedCount = 0;
+        for(int i=0; i<4; i++) {
+            Worker * worker = &world->workers[i];
+            if(worker->workerStatus == FINISHED) {
+                finishedCount ++;
+            }
+        }
+
+        if(finishedCount == 4) {
+            break;
+        }
+
+        sleep(1);
+    }
 
     shmctl(shmid, IPC_RMID, NULL); // Cleanup shared memory
     cleanupSemaphores(semIds, n);
+    cleanupMonitor();
     return 0;
 }

@@ -19,18 +19,30 @@ bool isPointInTheZone(Zone zone, Point point) {
 }
 
 Point getNearestCorner(Zone zone, Point point) {
-    Point nearestPoint = point;
-    if (point.x < zone.topLeft.x) {
-        nearestPoint.x = zone.topLeft.x;
-    } else if (point.x > zone.bottomRight.x) {
-        nearestPoint.x = zone.bottomRight.x;
+    // Calculate Manhattan distances to each corner
+    int distTopLeft = abs(zone.topLeft.x - point.x) + abs(zone.topLeft.y - point.y);
+    int distTopRight = abs(zone.bottomRight.x - point.x) + abs(zone.topLeft.y - point.y);
+    int distBottomLeft = abs(zone.topLeft.x - point.x) + abs(zone.bottomRight.y - point.y);
+    int distBottomRight = abs(zone.bottomRight.x - point.x) + abs(zone.bottomRight.y - point.y);
+
+    // Initialize the nearest corner as the top left and its distance
+    Point nearestCorner = zone.topLeft;
+    int minDist = distTopLeft;
+
+    // Check and update the nearest corner based on Manhattan distances
+    if (distTopRight < minDist) {
+        minDist = distTopRight;
+        nearestCorner = (Point){zone.bottomRight.x, zone.topLeft.y};
     }
-    if (point.y < zone.topLeft.y) {
-        nearestPoint.y = zone.topLeft.y;
-    } else if (point.y > zone.bottomRight.y) {
-        nearestPoint.y = zone.bottomRight.y;
+    if (distBottomLeft < minDist) {
+        minDist = distBottomLeft;
+        nearestCorner = (Point){zone.topLeft.x, zone.bottomRight.y};
     }
-    return nearestPoint;
+    if (distBottomRight < minDist) {
+        nearestCorner = zone.bottomRight;
+    }
+
+    return nearestCorner;
 }
 
 enum Direction decideNextMoveToGetInTheNearestCorner(Zone zone, Point point) {
@@ -65,6 +77,7 @@ decideNextMoveToTraverseTheZone(Zone zone, Point point, enum Direction prevXMove
                 return LEFT;
             }
         }
+        return NONE;
     }
 
 
@@ -92,11 +105,11 @@ bool isPointOnTheCorner(Zone zone, Point point) {
 bool canContinueMoving(Zone zone, Point point, enum Direction direction) {
     switch (direction) {
         case TOP:
-            return point.y >= zone.topLeft.y;
+            return point.y > zone.topLeft.y;
         case RIGHT:
-            return point.x <= zone.bottomRight.x;
+            return point.x < zone.bottomRight.x;
         case BOTTOM:
-            return point.y <= zone.bottomRight.y;
+            return point.y < zone.bottomRight.y;
         case LEFT:
             return point.x > zone.topLeft.x;
         case NONE:
@@ -106,9 +119,6 @@ bool canContinueMoving(Zone zone, Point point, enum Direction direction) {
 }
 
 void movePoint(Point *point, enum Direction direction) {
-    char *message = malloc(100 * sizeof(char));
-    sprintf(message, "Moving point(x: %d, y: %d) in direction %d", direction, point->x, point->y);
-
     switch (direction) {
         case TOP:
             point->y--;
@@ -153,4 +163,34 @@ enum Direction getStartingZoneYDirection(Zone zone, Point point) {
     }
 
     return NONE;
+}
+
+void printZone(Zone *zone) {
+    printf("(%d, %d) => (%d, %d)", zone->topLeft.x, zone->topLeft.y, zone->bottomRight.x, zone->bottomRight.y);
+}
+
+void printPoint(Point *point) {
+    printf("(%d, %d)", point->x, point->y);
+}
+
+void printDirection(enum Direction direction) {
+    char *stringDir;
+    switch (direction) {
+        case TOP:
+            stringDir = "TOP";
+            break;
+        case RIGHT:
+            stringDir = "RIGHT";
+            break;
+        case BOTTOM:
+            stringDir = "BOTTOM";
+            break;
+        case LEFT:
+            stringDir = "LEFT";
+            break;
+        default:
+            stringDir = "INVALID";
+    }
+
+    printf("%s", stringDir);
 }

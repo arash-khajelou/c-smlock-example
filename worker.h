@@ -12,6 +12,7 @@ enum WorkerStatus {
 };
 
 typedef struct {
+    int workerId;
     int repairedHouses;
     bool zoneTraverseStarted;
     enum WorkerStatus workerStatus;
@@ -20,7 +21,7 @@ typedef struct {
     Point position;
 } Worker;
 
-void initWorker(Worker *worker, int x, int y);
+void initWorker(Worker *worker, int x, int y, int workerId);
 
 void workerFacedError(Worker *worker, char *error);
 

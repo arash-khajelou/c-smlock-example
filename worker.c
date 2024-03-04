@@ -3,9 +3,11 @@
 //
 
 #include <printf.h>
+#include <stdio.h>
 #include "worker.h"
 
-void initWorker(Worker *worker, int x, int y) {
+void initWorker(Worker *worker, int x, int y, int workerId) {
+    worker->workerId = workerId;
     worker->position.x = x;
     worker->position.y = y;
     worker->workerStatus = WORKING;
@@ -22,5 +24,5 @@ void workerFacedError(Worker *worker, char *error) {
 
 void finishWorkerProcess(Worker *worker) {
     worker->workerStatus = FINISHED;
-    printf("Worker finished the zone traverse\n");
+    printf("Worker %d finished the zone traverse\n", worker->workerId);
 }

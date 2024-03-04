@@ -27,7 +27,7 @@ int *createSemaphores(int n) {
         semIds[i] = semget(IPC_PRIVATE, 1, IPC_CREAT | 0666);
         if (semIds[i] == -1) {
             char *error = malloc(100 * sizeof(char));;
-            sprintf(error, "semget: semget failed for semaphore %d", i);
+            sprintf(error, "semget: semget failed for semaphore %d\n", i);
             logError(error);
             exit(1);
         }
@@ -45,7 +45,7 @@ void lockHouse(int houseIndex) {
 
     if (semop(houseIndex, &operation, 1) == -1) {
         char *error = malloc(100 * sizeof(char));;
-        sprintf(error, "semop: lock failed for semaphore %d", houseIndex);
+        sprintf(error, "semop: lock failed for semaphore %d\n", houseIndex);
         logError(error);
         exit(1);
     }
@@ -60,7 +60,7 @@ void unlockHouse(int houseIndex) {
 
     if (semop(houseIndex, &operation, 1) == -1) {
         char *error = malloc(100 * sizeof(char));;
-        sprintf(error, "semop: unlock failed for semaphore %d", houseIndex);
+        sprintf(error, "semop: unlock failed for semaphore %d\n", houseIndex);
         logError(error);
         exit(1);
     }
@@ -71,7 +71,7 @@ void cleanupSemaphores(int *semIds, int n) {
     for (int i = 0; i < n * n; i++) {
         if (semctl(semIds[i], 0, IPC_RMID) == -1) {
             char *error = malloc(100 * sizeof(char));;
-            sprintf(error, "semctl: cleanup failed for semaphore %d", i);
+            sprintf(error, "semctl: cleanup failed for semaphore %d\n", i);
             logError(error);
         }
     }

@@ -28,7 +28,8 @@ Point getNearestCorner(Zone zone, Point point);
 
 enum Direction decideNextMoveToGetInTheNearestCorner(Zone zone, Point point);
 
-enum Direction decideNextMoveToTraverseTheZone(Zone zone, Point point, enum Direction prevXMove, enum Direction prevYMove);
+enum Direction
+decideNextMoveToTraverseTheZone(Zone zone, Point point, enum Direction prevXMove, enum Direction prevYMove);
 
 bool canContinueMoving(Zone zone, Point point, enum Direction direction);
 
@@ -41,5 +42,11 @@ bool isPointOnTheCorner(Zone zone, Point point);
 enum Direction getStartingZoneXDirection(Zone zone, Point point);
 
 enum Direction getStartingZoneYDirection(Zone zone, Point point);
+
+void printZone(Zone *zone);
+
+void printPoint(Point *point);
+
+void printDirection(enum Direction direction);
 
 #endif //FIRST_CODE_GEOMETRY_H
